@@ -1,3 +1,7 @@
+// The MIT License (MIT)
+// Copyright (c) 2014 John Franklin Pavley
+// see LICENSE.txt for full license text
+
 var assert = require('assert');
 
 var PLAYER_STANCES = {
