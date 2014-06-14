@@ -43,7 +43,7 @@ JFPCharacter.prototype.isShieldDown = function () {
 
 JFPCharacter.prototype.hitTarget = function (weapon) {
 	if (!this.target || this.target.isDead() || this.isDead()) {
-	    // there most be a target
+	// there must be a target
         // the dead can not be attacked
         // the dead can not attack
         console.log("Can't hit because " + this.name + " has no target, or its target is dead, or it's dead!");
