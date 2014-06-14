@@ -19,6 +19,7 @@ function JFPCharacter () {
 
   // instance vars
 
+  this.quietMode = false;
   this.name = "New Guy";
   this.health = 0;
   this.shield = 0;
@@ -46,14 +47,21 @@ JFPCharacter.prototype.hitTarget = function (weapon) {
     // there must be a target
     // the dead can not be attacked
     // the dead can not attack
-    console.log("Can't hit because " + this.name + " has no target, or its target is dead, or it's dead!");
+    if (!this.quietMode) {
+      console.log("Can't hit because " + this.name + " has no target, or its target is dead, or it's dead!");
+    }
     return;
   }
 
-  console.log("* " + this.name + " hits " + this.target.name + " with " + this.weapon.name + " *");
+  if (!this.quietMode) {
+    console.log("* " + this.name + " hits " + this.target.name + " with " + this.weapon.name + " *");    
+  }
 
   var hitPoints = this.weapon.damage + Math.floor((Math.random() * 10) + 1);
-  console.log("    Damage Amount: " + hitPoints);
+
+  if (!this.quietMode) {
+    console.log("    Damage Amount: " + hitPoints);    
+  }
 
   switch (this.target.stance) {
     case PLAYER_STANCES.ready:
@@ -76,16 +84,19 @@ JFPCharacter.prototype.hitTarget = function (weapon) {
     this.target.shield = 0;
   }
 
-  console.log("    Results of attack:");
-  console.log("    Target " + this.target.name + " shield: " + this.target.shield + " health: " + this.target.health);
+  if (!this.quietMode) {
+    console.log("    Results of attack:");
+    console.log("    Target " + this.target.name + " shield: " + this.target.shield + " health: " + this.target.health);
+  }
   if (this.target.isDead()) {
-    console.log("    Target " + this.target.name + " is dead! ");
+    if (!this.quietMode) {
+      console.log("    Target " + this.target.name + " is dead! ");      
+    }
   }
 }
 
 // test Character Class
 
-console.log("** Create the Mighty Morgan **");
 var morgan = new JFPCharacter();
 assert(morgan.isDead(), "morgan should be dead because he was just created!");
 assert(morgan.isShieldDown())
@@ -101,7 +112,6 @@ morgan.stance = PLAYER_STANCES.attacking;
 assert(morgan.stance === PLAYER_STANCES.attacking);
 console.log(morgan);
 
-console.log("** Create the Fantstic Fing **");
 var fing = new JFPCharacter();
 fing.name = "Fing";
 fing.stance = PLAYER_STANCES.defending;
@@ -113,21 +123,48 @@ console.log(fing);
 morgan.target = fing;
 fing.target = morgan;
 
-var count = 0;
-var gameOver = false;
+var gameLoop = function (id, goodGuy, badGuy) {
+  var count = 0;
+  var gameOver = false;
+  while (!gameOver) {
+    count++;
+    goodGuy.hitTarget();
+    badGuy.hitTarget();
+    if (goodGuy.isDead() || badGuy.isDead()) {
+      gameOver = true;
+    };
+  }
+};
+
+// Test run games
 var gameStartTime = Date.now();
-console.log("Let the game begin!");
-while (!gameOver) {
-  count++;
-  console.log("** Round " + count + " **");
-  morgan.hitTarget();
-  fing.hitTarget();
-  if (morgan.isDead() || fing.isDead()) {
-    gameOver = true;
-    console.log("Game over man!");
-    var gameEndTime = Date.now();
-    var gameElaspedTime = gameEndTime - gameStartTime;
-    console.log("Game Duration in milliseconds: " + gameElaspedTime);
-  };
-}
+console.log("==========================");
+console.log("Let the games begin!");
+console.log("==========================");
+for (var i = 10000; i >= 0; i--) {
+  var goodGuy = new JFPCharacter();
+  goodGuy.name = "Good Guy";
+  goodGuy.stance = PLAYER_STANCES.attacking;
+  goodGuy.health = STD_HEALTH;
+  goodGuy.shield = STD_SHIELD;
+  goodGuy.quietMode = true;
+
+  var badGuy = new JFPCharacter();
+  badGuy.name = "Bad Guy";
+  badGuy.stance = PLAYER_STANCES.attacking;
+  badGuy.health = STD_HEALTH;
+  badGuy.shield = STD_SHIELD;
+  badGuy.quietMode = true;
+
+  goodGuy.target = badGuy;
+  badGuy.target = goodGuy;
+
+  gameLoop(i, goodGuy, badGuy);
+};
+var gameEndTime = Date.now();
+var gameElaspedTime = gameEndTime - gameStartTime;
+console.log("===================================================");
+console.log("Games duration in milliseconds: " + gameElaspedTime);
+console.log("===================================================");
+
 
