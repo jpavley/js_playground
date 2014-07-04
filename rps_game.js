@@ -22,24 +22,19 @@ var ERROR_STATES = {
   "no_weapon" : -4
 };
 
-var GAME_OUTCOMES = {
-  "win_paper_rock" : 0,
-  "win_rock_sissors" : 1,
-  "win_sissors_paper" : 2,
-  "loss_rock_paper" : 3,
-  "loss_sissors_rock" : 4,
-  "loss_paper_sissors" : 5,
-  "tie_paper_paper" : 6,
-  "tie_rock_rock" : 7,
-  "tie_sissors_sissors" : 8
-};
-
 var GAME_STRATEGIES = {
   "random" : 0,
   "repeat" : 1,
   "no_repeat" : 2,
   "echo" : 4,
   "beat_last_move" : 5
+};
+
+var BATTLE_RESULT = {
+  // -1 loss, 0 tie, 1 win (for weapon1)
+  "loss" : -1,
+  "tie" : 0,
+  "win" : 1
 };
 
 // constants
@@ -85,61 +80,7 @@ JFPCharacter.prototype.hitTarget = function () {
   this.weaponHistory.push(this.weaponHistory);
   this.targetWeaponHistory.push(this.target.weapon);
 
-  switch (this.weapon) {
-    case PLAYER_WEAPONS.rock:
-
-      switch (this.target.weapon) {
-        case  PLAYER_WEAPONS.rock:
-          result = tie_rock_rock;
-        break;
-        case PLAYER_WEAPONS.sissors:
-          result = win_rock_sissors;
-        break;
-        case PLAYER_WEAPONS.paper:
-          result = loss_rock_paper;
-        break;
-        default:
-          result = ERROR_STATES.no_weapon;
-      }
-    break;
-    
-    case PLAYER_WEAPONS.sissors:
-
-      switch (this.target.weapon) {
-        case  PLAYER_WEAPONS.rock:
-          result = loss_sissors_rock;
-        break;
-        case PLAYER_WEAPONS.sissors:
-          result = tie_sissors_sissors;
-        break;
-        case PLAYER_WEAPONS.paper:
-          result = win_sissors_paper;
-        break;
-        default:
-          result = ERROR_STATES.no_weapon;
-      }
-    break;
-
-    case PLAYER_WEAPONS.paper:
-
-      switch (this.target.weapon) {
-        case  PLAYER_WEAPONS.rock:
-          result = win_paper_rock;
-        break;
-        case PLAYER_WEAPONS.sissors:
-          result = loss_paper_sissors;
-        break;
-        case PLAYER_WEAPONS.paper:
-          result = tie_paper_paper;
-        break;
-        default:
-          result = ERROR_STATES.no_weapon;
-      }
-
-    break;
-    default:
-      result = ERROR_STATES.no_weapon;
-  }
+  result = this.calcWinningWeapon(this.weapon, this.target.weapon);
 
   return result;
 };
@@ -189,40 +130,100 @@ JFPCharacter.prototype.chooseWeapon = function () {
 };
 
 JFPCharacter.prototype.calcWinningWeapon = function (weapon1, weapon2) {
-  // -1 loss, 0 tie, 1 win (for weapon1)
-  // rock = 0, paper = 1, sissors = 2
-  var result = -1, // assume loss
-      lastWeaponIndex = PLAYER_WEAPONS.length - 1;
+  var result = BATTLE_RESULT.loss; // assume loss
 
-  if (weapon11 === weapon2) {
-    result = 0
+  if (weapon1 === weapon2) {
+    result = BATTLE_RESULT.tie
     return result; // early return
   };
 
-  if (weapon1 === 0 && weapon2 === lastWeaponIndex) {
-    // special case
-    result = 1; // early return
-    return result;
-  };
+  if (weapon1 === PLAYER_WEAPONS.rock && weapon2 === PLAYER_WEAPONS.sissors) {
+    result = BATTLE_RESULT.win;
+    return result; // early return
+  }
 
-  if (weapon1 > weapon2) {
-    result = 1;
-  };
+  if (weapon1 === PLAYER_WEAPONS.paper && weapon2 === PLAYER_WEAPONS.rock) {
+    result = BATTLE_RESULT.win;
+    return result; // early return
+  }
 
-  return result;
+  if (weapon1 === PLAYER_WEAPONS.sissors && weapon2 === PLAYER_WEAPONS.paper) {
+    result = BATTLE_RESULT.win;
+    return result; // early return
+  }
 
+  return result; // if we got here it's a loss
 };
 
 // tests
 
+// player 1
+
 var player1 = new JFPCharacter();
-
 player1.name = "player1";
-assert(player1.name === "player1");
-
-console.log(player1);
 
 
+// player 2
+
+var player2 = new JFPCharacter();
+player2.name = "player2";
+
+// battle tests ties
+
+var battleResult;
+
+console.log("battle tests - ties");
+
+player1.weapon = PLAYER_WEAPONS.rock;
+player2.weapon = PLAYER_WEAPONS.rock;
+battleResult = player1.calcWinningWeapon(player1.weapon, player2.weapon);
+assert(battleResult === BATTLE_RESULT.tie);
+
+player1.weapon = PLAYER_WEAPONS.paper;
+player2.weapon = PLAYER_WEAPONS.paper;
+battleResult = player1.calcWinningWeapon(player1.weapon, player2.weapon);
+assert(battleResult === BATTLE_RESULT.tie);
+
+player1.weapon = PLAYER_WEAPONS.sissors;
+player2.weapon = PLAYER_WEAPONS.sissors;
+battleResult = player1.calcWinningWeapon(player1.weapon, player2.weapon);
+assert(battleResult === BATTLE_RESULT.tie, battleResult);
+
+console.log("battle tests - wins");
+
+player1.weapon = PLAYER_WEAPONS.rock;
+player2.weapon = PLAYER_WEAPONS.sissors;
+battleResult = player1.calcWinningWeapon(player1.weapon, player2.weapon);
+assert(battleResult === BATTLE_RESULT.win);
+
+player1.weapon = PLAYER_WEAPONS.paper;
+player2.weapon = PLAYER_WEAPONS.rock;
+battleResult = player1.calcWinningWeapon(player1.weapon, player2.weapon);
+assert(battleResult === BATTLE_RESULT.win);
+
+player1.weapon = PLAYER_WEAPONS.sissors;
+player2.weapon = PLAYER_WEAPONS.paper;
+battleResult = player1.calcWinningWeapon(player1.weapon, player2.weapon);
+assert(battleResult === BATTLE_RESULT.win);
+
+console.log("battle tests - losses");
+
+player1.weapon = PLAYER_WEAPONS.rock;
+player2.weapon = PLAYER_WEAPONS.paper;
+battleResult = player1.calcWinningWeapon(player1.weapon, player2.weapon);
+assert(battleResult === BATTLE_RESULT.loss);
+
+player1.weapon = PLAYER_WEAPONS.paper;
+player2.weapon = PLAYER_WEAPONS.sissors;
+battleResult = player1.calcWinningWeapon(player1.weapon, player2.weapon);
+assert(battleResult === BATTLE_RESULT.loss);
+
+player1.weapon = PLAYER_WEAPONS.sissors;
+player2.weapon = PLAYER_WEAPONS.rock;
+battleResult = player1.calcWinningWeapon(player1.weapon, player2.weapon);
+assert(battleResult === BATTLE_RESULT.loss);
+
+console.log("tests - complete");
 
 
 
